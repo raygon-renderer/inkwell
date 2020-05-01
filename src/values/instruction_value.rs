@@ -1,16 +1,24 @@
-use either::{Either, Either::{Left, Right}};
-use llvm_sys::core::{LLVMGetAlignment, LLVMSetAlignment, LLVMGetInstructionOpcode, LLVMIsTailCall, LLVMGetPreviousInstruction, LLVMGetNextInstruction, LLVMGetInstructionParent, LLVMInstructionEraseFromParent, LLVMInstructionClone, LLVMSetVolatile, LLVMGetVolatile, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMSetOperand, LLVMValueAsBasicBlock, LLVMIsABasicBlock, LLVMGetICmpPredicate, LLVMGetFCmpPredicate, LLVMIsAAllocaInst, LLVMIsALoadInst, LLVMIsAStoreInst, LLVMGetMetadata, LLVMHasMetadata, LLVMSetMetadata};
-#[llvm_versions(3.8..=latest)]
-use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
+use either::{
+    Either,
+    Either::{Left, Right},
+};
 #[llvm_versions(3.9..=latest)]
 use llvm_sys::core::LLVMInstructionRemoveFromParent;
-use llvm_sys::LLVMOpcode;
+use llvm_sys::core::{
+    LLVMGetAlignment, LLVMGetFCmpPredicate, LLVMGetICmpPredicate, LLVMGetInstructionOpcode, LLVMGetInstructionParent, LLVMGetMetadata,
+    LLVMGetNextInstruction, LLVMGetNumOperands, LLVMGetOperand, LLVMGetOperandUse, LLVMGetPreviousInstruction, LLVMGetVolatile, LLVMHasMetadata,
+    LLVMInstructionClone, LLVMInstructionEraseFromParent, LLVMIsAAllocaInst, LLVMIsABasicBlock, LLVMIsALoadInst, LLVMIsAStoreInst,
+    LLVMIsATerminatorInst, LLVMIsTailCall, LLVMSetAlignment, LLVMSetMetadata, LLVMSetOperand, LLVMSetVolatile, LLVMValueAsBasicBlock,
+};
+#[llvm_versions(3.8..=latest)]
+use llvm_sys::core::{LLVMGetOrdering, LLVMSetOrdering};
 use llvm_sys::prelude::LLVMValueRef;
+use llvm_sys::LLVMOpcode;
 
 use crate::basic_block::BasicBlock;
 use crate::values::traits::AsValueRef;
-use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, Value, MetadataValue};
-use crate::{AtomicOrdering, IntPredicate, FloatPredicate};
+use crate::values::{BasicValue, BasicValueEnum, BasicValueUse, MetadataValue, Value};
+use crate::{AtomicOrdering, FloatPredicate, IntPredicate};
 
 // REVIEW: Split up into structs for SubTypes on InstructionValues?
 // REVIEW: This should maybe be split up into InstructionOpcode and ConstOpcode?
@@ -195,6 +203,10 @@ impl<'ctx> InstructionValue<'ctx> {
         } else {
             false
         }
+    }
+
+    pub fn is_terminator(self) -> bool {
+        unsafe { !LLVMIsATerminatorInst(self.as_value_ref()).is_null() }
     }
 
     pub fn replace_all_uses_with(self, other: &InstructionValue<'ctx>) {
